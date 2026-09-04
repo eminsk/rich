@@ -71,6 +71,43 @@ def test_render():
     assert render() == expected
 
 
+def test_columns_narrow_width_zero_division():
+    # Console width equals column width with default padding (0, 1)
+    console = Console(file=io.StringIO(), width=16, legacy_windows=False)
+    console.print(Columns([f"file_{i:02d}.txt" for i in range(4)], width=16))
+    assert (
+        console.file.getvalue()
+        == "file_00.txt     \nfile_01.txt     \nfile_02.txt     \nfile_03.txt     \n"
+    )
+
+    # Console width narrower than requested column width
+    console = Console(file=io.StringIO(), width=10, legacy_windows=False)
+    console.print(Columns(["item1", "item2"], width=16))
+    assert "item1" in console.file.getvalue()
+    assert "item2" in console.file.getvalue()
+
+    # column_first=True when column count falls back to 1
+    console = Console(file=io.StringIO(), width=16, legacy_windows=False)
+    console.print(Columns(["a", "b", "c"], width=16, column_first=True))
+    assert (
+        console.file.getvalue()
+        == "a               \nb               \nc               \n"
+    )
+
+    # Multi-column boundary without right padding: 16 + 1 + 16 = 33 fits 2 columns
+    console = Console(file=io.StringIO(), width=33, legacy_windows=False)
+    console.print(Columns(["col1", "col2", "col3", "col4"], width=16))
+    assert (
+        console.file.getvalue()
+        == "col1             col2            \ncol3             col4            \n"
+    )
+
+    # Zero width and zero padding edge case
+    console = Console(file=io.StringIO(), width=16, legacy_windows=False)
+    console.print(Columns(["alpha", "beta"], width=0, padding=0))
+    assert console.file.getvalue() == "…\n…\n"
+
+
 if __name__ == "__main__":
     result = render()
     print(result)

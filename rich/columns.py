@@ -121,7 +121,10 @@ class Columns(JupyterMixin):
         table.title = self.title
 
         if self.width is not None:
-            column_count = (max_width) // (self.width + width_padding)
+            stride = self.width + width_padding
+            column_count = (
+                max(1, (max_width + width_padding) // stride) if stride > 0 else 1
+            )
             for _ in range(column_count):
                 table.add_column(width=self.width)
         else:
@@ -148,9 +151,11 @@ class Columns(JupyterMixin):
         ]
         if self.equal:
             _renderables = [
-                None
-                if renderable is None
-                else Constrain(renderable, renderable_widths[0])
+                (
+                    None
+                    if renderable is None
+                    else Constrain(renderable, renderable_widths[0])
+                )
                 for renderable in _renderables
             ]
         if self.align:
